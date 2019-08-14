@@ -6,9 +6,24 @@ const Posts = require("../models/post");
 
 router.get("/", (req, res, next) => {
   Posts.find()
+    .select("notes date")
     .exec()
     .then(docs => {
-      res.status(200).json(docs);
+      const response = {
+        //count: docs.length,
+        post: docs.map(docs => {
+          return {
+            notes: docs.notes,
+            date: docs.date,
+            _id: docs._id,
+            request: {
+              type: "GET",
+              url: "http://localhost:3000/posts/" + docs._id
+            }
+          };
+        })
+      };
+      res.status(200).json(response);
     })
     .catch(err => {
       res.status(500).json({ error: err });
@@ -26,8 +41,16 @@ router.post("/", (req, res, next) => {
     .then(result => {
       console.log("Done saving");
       res.status(201).json({
-        message: "Handling POST requests",
-        newPost: post
+        message: "Created new post",
+        newPost: {
+          notes: result.notes,
+          date: result.date,
+          _id: result._id,
+          request: {
+            type: "GET",
+            url: "http://localhost:3000/posts/" + result._id
+          }
+        }
       });
     })
     .catch(err => {
