@@ -32,21 +32,22 @@ const upload = multer({
 
 router.get("/", (req, res, next) => {
   Photos.find()
-    .select("photo _id")
+    .select("_id photo")
     .exec()
     .then(docs => {
       const response = {
         photos: docs.map(doc => {
           return {
-            _id: docs._id,
-            Photo: docs.Photo,
+            _id: doc._id,
+            Photo: doc.photo,
             request: {
               type: "GET",
-              url: "http://localhost:3000/photos/" + docs._id
+              url: "http://localhost:3000/photos/" + doc._id
             }
           };
         })
       };
+      res.status(200).json(response);
     })
     .catch(err => {
       res.status(500).json({ error: err });
@@ -56,24 +57,62 @@ router.get("/", (req, res, next) => {
 router.post("/", upload.single("photo"), (req, res, next) => {
   console.log(req.file);
   const photo = new Photos({
-    _id: mongoose.Types.ObjectId,
+    _id: new mongoose.Types.ObjectId(),
     photo: req.file.path
   });
-  res.status(201).json({
-    message: "Posting the photos"
-  });
+  photo
+    .save()
+    .then(result => {
+      console.log(result);
+      res.status(200).json({
+        message: "Photo posted succesfully"
+      });
+    })
+    .catch(err => {
+      res.status(404).json({
+        error: err
+      });
+    });
 });
 
 router.get("/:photoId", (req, res, next) => {
-  res.status(200).json({
-    message: "Getting one particular photo"
-  });
+  const photoId = req.params.photoId;
+  Photos.findById(photoId)
+    .exec()
+    .then(doc => {
+      if (doc) {
+        const response = {
+          _id: doc._id,
+          url: "http://localhost:3000/" + doc.photo
+        };
+        res.status(200).json(response);
+      } else {
+        res.status(404).json({
+          message: "Requested photo not available"
+        });
+      }
+    })
+    .catch(err => {
+      res.status(500).json({
+        error: err
+      });
+    });
 });
 
 router.delete("/:photoId", (req, res, next) => {
-  res.status(200).json({
-    message: "Deleting one particular photo"
-  });
+  const photoId = req.params.photoId;
+  Photos.remove({ _id: photoId })
+    .exec()
+    .then(result => {
+      res.status(201).json({
+        message: "Deleted succesfully"
+      });
+    })
+    .catch(err => {
+      res.status(404).json({
+        error: err
+      });
+    });
 });
 
 module.exports = router;
