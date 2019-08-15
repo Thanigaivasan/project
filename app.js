@@ -14,7 +14,8 @@ mongoose.connect("mongodb://localhost:27017/project", {
 
 //log all the requests
 app.use(morgan("dev"));
-app.use('/uploads',express.static("uploads"));
+app.use("/uploads", express.static("uploads"));
+app.use("/files", express.static("files"));
 
 //Use this to parse the incoming url request and Json data
 app.use(bodyParser.urlencoded({ extended: false }));
